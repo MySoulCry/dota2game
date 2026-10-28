@@ -7,9 +7,10 @@
   Реклама:
     ads.provider — 'yandex' (Яндекс Реклама, РСЯ) — основной вариант для РФ,
                    'adsense' (Google) или 'none'.
-    ads.yandex   — id блоков РСЯ вида R-A-1234567-1 из кабинета Яндекс Рекламы.
+    ads.yandex.pageId — id площадки из кабинета Яндекса: включает автоматическое
+                        размещение (автоблоки), отдельные блоки не нужны.
     ads.client / ads.slots — Publisher ID и id блоков Google AdSense.
-  Пока ads.enabled = false, на месте блоков показывается заглушка — это нормально.
+  Пока ads.enabled = false, реклама не показывается и слоты остаются пустыми.
 */
 window.APP_CONFIG = {
   brand: {
