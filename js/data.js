@@ -490,9 +490,10 @@
     }
   }
 
-  async function refillPool(catalogs, onStep, exclude) {
+  async function refillPool(catalogs, onStep, exclude, target) {
     const report = typeof onStep === 'function' ? onStep : function () {};
     const used = Array.isArray(exclude) ? exclude : [];
+    const want = Math.max(1, Number(target) || POOL_SIZE);
     const questions = [];
     const accounts = [];
     const seenAccount = {};
@@ -529,7 +530,7 @@
           accounts.push(accountId);
         }
       });
-      if (questions.length < POOL_SIZE && isRankedMatch(row.match)) {
+      if (questions.length < want && isRankedMatch(row.match)) {
         const q = questionFromMatch(row.match, catalogs, row.meta);
         if (q && used.indexOf(q.matchId) === -1) {
           questions.push(q);
@@ -538,7 +539,7 @@
     });
 
     // 2. Рейтинговая история этих игроков: там рейтинговых матчей уже много.
-    if (accounts.length && questions.length < POOL_SIZE) {
+    if (accounts.length && questions.length < want) {
       const histories = await Promise.all(accounts.map(function (id) {
         return getJSON('/api/players/' + id + '/matches?limit=25').catch(function () {
           return [];
@@ -557,11 +558,11 @@
         });
       });
 
-      const picked = shuffle(ranked).slice(0, POOL_SIZE + 2);
+      const picked = shuffle(ranked).slice(0, Math.max(8, want * 2));
       report('Собираем сборки из рейтинговых матчей…');
       const details = await fetchMatchDetails(picked);
       details.forEach(function (row) {
-        if (questions.length >= POOL_SIZE) {
+        if (questions.length >= want) {
           return;
         }
         const q = questionFromMatch(row.match, catalogs, row.meta);
@@ -595,11 +596,14 @@
       return q && used.indexOf(q.matchId) === -1;
     });
 
-    // в кэше остались только уже сыгранные вопросы — добираем новые
-    if (fresh.length < rounds) {
-      step('Ищем новые матчи, чтобы вопросы не повторялись…');
+    // в кэше остались только уже сыгранные вопросы — добираем новые,
+    // при неудаче пробуем ещё раз на другом наборе игроков
+    for (let attempt = 0; attempt < 2 && fresh.length < rounds; attempt++) {
+      step(attempt === 0
+        ? 'Ищем новые матчи, чтобы вопросы не повторялись…'
+        : 'Добираем ещё матчи…');
       try {
-        const extra = await refillPool(catalogs, step, used);
+        const extra = await refillPool(catalogs, step, used, rounds + 2);
         const merged = [];
         const mergeSeen = {};
         extra.concat(pool).forEach(function (q) {
@@ -614,27 +618,23 @@
           return used.indexOf(q.matchId) === -1;
         });
       } catch (error) {
-        // если новые матчи не нашлись, но старые есть — играем их
         if (!pool.length) {
           throw error;
         }
+        break;
       }
     }
 
-    const source = fresh.length >= rounds ? fresh : fresh.concat(shuffle(pool));
+    // только непоказанные матчи: лучше короткая игра, чем повторы
+    const source = fresh.length ? fresh : pool;
     const out = [];
-    const picked = {};
+    const pickedIds = {};
     for (let i = 0; i < source.length && out.length < rounds; i++) {
       const q = source[i];
-      if (q && !picked[q.matchId]) {
-        picked[q.matchId] = true;
+      if (q && !pickedIds[q.matchId]) {
+        pickedIds[q.matchId] = true;
         out.push(q);
       }
-    }
-
-    // крайний случай: уникальных матчей меньше, чем раундов
-    while (out.length < rounds && pool.length) {
-      out.push(pool[out.length % pool.length]);
     }
 
     if (!out.length) {
@@ -642,6 +642,7 @@
     }
 
     markUsed(out.map(function (q) { return q.matchId; }));
+    console.info('[quiz] матчей в игре:', out.length, 'из', rounds, '| свежих в запасе:', fresh.length);
     return out;
   }
 
