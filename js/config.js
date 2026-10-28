@@ -40,6 +40,12 @@ window.APP_CONFIG = {
   // переключится на локальный режим (комнаты видны во вкладках этого браузера).
   rooms: {
     brokerUrl: 'wss://broker.emqx.io:8084/mqtt',
+    // запасные брокеры: если основной не отвечает, пробуем по очереди
+    brokerUrls: [
+      'wss://broker.emqx.io:8084/mqtt',
+      'wss://broker.hivemq.com:8884/mqtt',
+      'wss://test.mosquitto.org:8081/mqtt'
+    ],
     topicPrefix: 'dotaguess/v1',
     maxPlayers: 5,
     minPlayers: 2,

@@ -15,6 +15,11 @@
   const MAX_PLAYERS = Number(CFG.rooms && CFG.rooms.maxPlayers) || 5;
   const MIN_PLAYERS = Number(CFG.rooms && CFG.rooms.minPlayers) || 2;
   const BROKER = CFG.rooms && CFG.rooms.brokerUrl ? CFG.rooms.brokerUrl : 'wss://broker.emqx.io:8084/mqtt';
+  // запасные брокеры: если первый недоступен (например, блокируется),
+  // пробуем следующий, а в самом конце — локальный режим
+  const BROKERS = (CFG.rooms && Array.isArray(CFG.rooms.brokerUrls) && CFG.rooms.brokerUrls.length)
+    ? CFG.rooms.brokerUrls.slice()
+    : [BROKER];
   const LOBBY_TTL = Number(CFG.rooms && CFG.rooms.lobbyTtlMs) || 120000;
   const DEFAULT_ROUNDS = Number(CFG.rooms && CFG.rooms.defaultRounds) || 8;
   const DEFAULT_SECONDS = Number(CFG.rooms && CFG.rooms.defaultSeconds) || 20;
@@ -113,9 +118,29 @@
 
   async function connectMqtt() {
     if (!window.mqtt) {
-      await loadScript('https://unpkg.com/mqtt/dist/mqtt.min.js');
+      try {
+        // библиотека лежит в проекте: не зависим от внешнего CDN
+        await loadScript('js/vendor/mqtt.min.js');
+      } catch (e) {
+        await loadScript('https://unpkg.com/mqtt/dist/mqtt.min.js');
+      }
+    }
+    if (!window.mqtt) {
+      throw new Error('не удалось загрузить MQTT-клиент');
     }
 
+    let lastError = null;
+    for (let i = 0; i < BROKERS.length; i++) {
+      try {
+        return await connectBroker(BROKERS[i]);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error('брокеры недоступны');
+  }
+
+  function connectBroker(url) {
     return new Promise(function (resolve, reject) {
       const clientId = 'dg_' + Math.random().toString(16).slice(2, 10);
       let settled = false;
@@ -125,15 +150,15 @@
         if (!settled) {
           settled = true;
           try { if (client) client.end(true); } catch (e) {}
-          reject(new Error('брокер не отвечает'));
+          reject(new Error('брокер ' + url + ' не отвечает'));
         }
-      }, 10000);
+      }, 7000);
 
       try {
-        client = window.mqtt.connect(BROKER, {
+        client = window.mqtt.connect(url, {
           clientId: clientId,
           clean: true,
-          connectTimeout: 8000,
+          connectTimeout: 6000,
           reconnectPeriod: 4000,
           keepalive: 30
         });
@@ -150,6 +175,9 @@
         }
         settled = true;
         window.clearTimeout(timer);
+        // дальше обрывы не фатальны: mqtt.js переподключится сам
+        client.removeAllListeners('error');
+        client.on('error', function () {});
         resolve(client);
       });
 

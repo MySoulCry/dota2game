@@ -694,10 +694,14 @@
     }
 
     if (el.roomStatus) {
+      const localMode = typeof Rooms.transport === 'function' && Rooms.transport() === 'local';
       if (host) {
         el.roomStatus.textContent = 'Игроков: ' + roomPlayers.length + '/5. Начать можно от 2.';
       } else {
         el.roomStatus.textContent = 'Ждём, когда хост начнёт игру…';
+      }
+      if (localMode) {
+        el.roomStatus.textContent += ' Внимание: онлайн-канал недоступен, комнату видно только в этом браузере.';
       }
     }
   }
