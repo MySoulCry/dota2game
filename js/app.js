@@ -18,6 +18,7 @@
 
   const BOARD_KEY = 'dotaguess.board.v1';
   const NICK_KEY = 'dotaguess.name';
+  const NICK_LOCK_KEY = 'dotaguess.nickLocked';
   const SOLO_ROUNDS = 10;
   const SOLO_SECONDS = 20;
 
@@ -29,6 +30,7 @@
     screens: document.querySelectorAll('.screen'),
 
     name: $('player-name'),
+    nickHint: $('nick-hint'),
     homeBest: $('home-best'),
     homeGames: $('home-games'),
     homePlace: $('home-place'),
@@ -137,6 +139,34 @@
       store.set(NICK_KEY, name);
     }
     return name;
+  }
+
+  // Один ник на устройство: имя фиксируется после первой завершённой игры.
+  function nickLocked() {
+    return store.get(NICK_LOCK_KEY) === '1';
+  }
+
+  function applyNickLock() {
+    const locked = nickLocked();
+    if (el.name) {
+      el.name.readOnly = locked;
+      el.name.classList.toggle('is-locked', locked);
+      if (locked) {
+        el.name.value = store.get(NICK_KEY) || el.name.value;
+      }
+    }
+    if (el.nickHint) {
+      el.nickHint.hidden = !locked;
+    }
+  }
+
+  function lockNickname() {
+    if (nickLocked()) {
+      return;
+    }
+    store.set(NICK_KEY, nickname());
+    store.set(NICK_LOCK_KEY, '1');
+    applyNickLock();
   }
 
   function showScreen(name) {
@@ -542,6 +572,7 @@
       date: Date.now()
     };
     Board.add(entry);
+    lockNickname();
     if (Leaderboard) {
       Leaderboard.submit(entry);
     }
@@ -832,6 +863,7 @@
     };
     if (entry.score > 0) {
       Board.add(entry);
+      lockNickname();
       if (Leaderboard) {
         Leaderboard.submit(entry);
       }
@@ -1069,6 +1101,7 @@
     if (el.name) {
       el.name.value = store.get(NICK_KEY) || '';
     }
+    applyNickLock();
 
     bindEvents();
     renderBoard();

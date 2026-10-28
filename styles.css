@@ -197,6 +197,19 @@ body {
   border-color: rgba(124, 249, 255, 0.55);
 }
 
+.input.is-locked {
+  opacity: 0.7;
+  cursor: default;
+  border-style: dashed;
+}
+
+.field__hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
 .input--code {
   letter-spacing: 0.32em;
   text-transform: uppercase;
