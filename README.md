@@ -186,6 +186,7 @@ ads: {
 ```
 api: { poolSize: 12, cacheMinutes: 20, minRankTier: 40 }
 rooms: { maxPlayers: 5, minPlayers: 2, brokerUrl: '...' }
+analytics: { yandexMetrika: '' }   // номер счётчика Метрики
 ```
 
 `minRankTier`: 11–15 Herald, 21–25 Guardian, 31–35 Crusader, 41–45 Archon, 51–55 Legend, 61–65 Ancient, 71–75 Divine, 80 Immortal. Это только приоритет: матчи ниже порога тоже попадают в игру, если рейтинговых не хватает.
