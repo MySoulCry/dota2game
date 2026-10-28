@@ -14,6 +14,9 @@
   const SLOTS = ADS.slots || {};
   const YT = ADS.yandex || {};
   const PROVIDER = String(ADS.provider || 'none').toLowerCase();
+  // id площадки из кабинета Яндекса: включает автоматическое размещение (автоблоки)
+  const YT_PAGE = String(YT.pageId || '').trim();
+  const PAGE_ID_ENABLED = PROVIDER === 'yandex' && !!YT_PAGE;
 
   const PRO_KEY = 'dotaguess.pro';
 
@@ -213,6 +216,36 @@
     container.appendChild(note);
   }
 
+  // Автоматическое размещение РСЯ: два скрипта Яндекса, второй — с id площадки.
+  // Ставим их из JS, чтобы «версия без рекламы» (?pro=1) действительно отключала рекламу.
+  let yandexAutoLoaded = false;
+
+  function loadYandexAuto() {
+    if (yandexAutoLoaded || pro || !ADS.enabled || !YT_PAGE) {
+      return;
+    }
+    yandexAutoLoaded = true;
+
+    const context = document.createElement('script');
+    context.async = true;
+    context.src = 'https://yandex.ru/ads/system/context.js';
+    document.head.appendChild(context);
+
+    const loader = document.createElement('script');
+    loader.async = true;
+    loader.setAttribute('data-page-id', YT_PAGE);
+    loader.src = 'https://yandex.ru/ads/system/ap-loader.js';
+    document.head.appendChild(loader);
+  }
+
+  // при автоблоках собственные рамки слотов не нужны — рекламу расставляет Яндекс
+  function renderAuto() {
+    Array.prototype.forEach.call(document.querySelectorAll('.ad-slot'), function (slot) {
+      slot.classList.add('is-pro');
+    });
+    loadYandexAuto();
+  }
+
   function renderSlot(container, place) {
     if (!container) {
       return;
@@ -220,6 +253,12 @@
     container.innerHTML = '';
 
     if (pro) {
+      return;
+    }
+
+    // РСЯ в режиме «автоматическое размещение»: блоки расставляет сам Яндекс
+    if (PROVIDER === 'yandex' && PAGE_ID_ENABLED) {
+      renderAuto();
       return;
     }
 
@@ -347,7 +386,7 @@
 
   function init() {
     if (BRAND.name) {
-      document.title = BRAND.name + ' — браузерная аркада';
+      document.title = BRAND.name + (BRAND.tagline ? ' — ' + BRAND.tagline : '');
       const nameNode = document.getElementById('brand-name');
       if (nameNode) {
         nameNode.textContent = BRAND.name;
