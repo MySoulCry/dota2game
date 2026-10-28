@@ -83,10 +83,11 @@
   }
 
   // OpenDota бесплатный и с лимитами: на 429/5xx и таймаут пробуем ещё раз
-  async function getJSON(path, attempt) {
+  async function getJSON(path, attempt, timeoutMs) {
     const tries = Number(attempt) || 0;
+    const limit = Number(timeoutMs) || 15000;
     const controller = new AbortController();
-    const timer = window.setTimeout(function () { controller.abort(); }, 15000);
+    const timer = window.setTimeout(function () { controller.abort(); }, limit);
     let res = null;
 
     try {
@@ -98,7 +99,7 @@
       window.clearTimeout(timer);
       if (tries < 2) {
         await delay(800 * (tries + 1));
-        return getJSON(path, tries + 1);
+        return getJSON(path, tries + 1, limit);
       }
       throw new Error('Не удалось связаться с OpenDota. Проверь интернет и попробуй ещё раз.');
     }
@@ -107,7 +108,7 @@
     if (res.status === 429 || res.status >= 500) {
       if (tries < 2) {
         await delay(1000 * (tries + 1));
-        return getJSON(path, tries + 1);
+        return getJSON(path, tries + 1, limit);
       }
       if (res.status === 429) {
         throw new Error('OpenDota ограничил частоту запросов (429). Подожди минуту и нажми «Повторить».');
@@ -180,7 +181,8 @@
 
   async function loadItems() {
     try {
-      const map = await getJSON('/api/constants/items');
+      // самый тяжёлый запрос (несколько сотен КБ) — даём ему больше времени
+      const map = await getJSON('/api/constants/items', 0, 30000);
       const list = [];
       const seen = {};
       Object.keys(map || {}).forEach(function (name) {
@@ -227,7 +229,7 @@
     let items = cacheGet(ITEMS_KEY, HERO_CACHE_MS);
 
     if (!heroes || !heroes.length) {
-      const raw = await getJSON('/api/heroes');
+      const raw = await getJSON('/api/heroes', 0, 30000);
       heroes = (raw || []).map(normalizeHero).filter(function (h) { return h.id && h.name; });
       if (!heroes.length) {
         throw new Error('не удалось загрузить список героев');
@@ -556,6 +558,12 @@
 
   window.Questions = {
     build: build,
+    // прогреваем каталоги героев и предметов заранее, чтобы первая игра стартовала быстрее
+    warm: function () {
+      ensureCatalogs().catch(function () {
+        /* не критично: если не вышло, попробуем при старте игры */
+      });
+    },
     rankInfo: rankInfo,
     formatDuration: formatDuration
   };

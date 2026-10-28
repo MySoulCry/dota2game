@@ -266,7 +266,7 @@
     el.qItems.innerHTML = '';
     const note = document.createElement('p');
     note.className = 'question__loading';
-    note.textContent = 'Загружаем реальные матчи из OpenDota…';
+    note.textContent = 'Загружаем реальные матчи из OpenDota… Первый раз это может занять до минуты.';
     el.qItems.appendChild(note);
 
     el.qOptions.innerHTML = '';
@@ -1064,6 +1064,13 @@
     bindEvents();
     renderBoard();
     updateHomeStats();
+
+    // каталоги героев и предметов подтягиваем в фоне, чтобы игра стартовала быстрее
+    if (Questions && typeof Questions.warm === 'function') {
+      window.setTimeout(function () {
+        Questions.warm();
+      }, 800);
+    }
 
     const params = new URLSearchParams(window.location.search);
     const code = (params.get('room') || '').trim().toUpperCase();
