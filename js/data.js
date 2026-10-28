@@ -19,6 +19,7 @@
   const HEROES_KEY = 'dotaguess.catalog.heroes.v2';
   const ITEMS_KEY = 'dotaguess.catalog.items.v2';
   const POOL_KEY = 'dotaguess.pool.v4';
+  const USED_KEY = 'dotaguess.used.v1';
 
   // rank_tier: 11..15 Herald, 21..25 Guardian, ... 71..75 Divine, 80 Immortal
   const TIERS = [
@@ -460,8 +461,38 @@
     return out;
   }
 
-  async function refillPool(catalogs, onStep) {
+  // Матчи, которые уже показывали: чтобы следующие игры не повторяли вопросы.
+  function usedMatches() {
+    try {
+      const raw = window.localStorage.getItem(USED_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function markUsed(matchIds) {
+    try {
+      const list = usedMatches().concat(matchIds);
+      const unique = [];
+      const seen = {};
+      for (let i = list.length - 1; i >= 0 && unique.length < 250; i--) {
+        const id = list[i];
+        if (id && !seen[id]) {
+          seen[id] = true;
+          unique.push(id);
+        }
+      }
+      window.localStorage.setItem(USED_KEY, JSON.stringify(unique.reverse()));
+    } catch (e) {
+      /* приватный режим — просто не запоминаем */
+    }
+  }
+
+  async function refillPool(catalogs, onStep, exclude) {
     const report = typeof onStep === 'function' ? onStep : function () {};
+    const used = Array.isArray(exclude) ? exclude : [];
     const questions = [];
     const accounts = [];
     const seenAccount = {};
@@ -477,7 +508,12 @@
       throw new Error('OpenDota не вернул готовые матчи — попробуй ещё раз через минуту');
     }
 
-    const seeds = shuffle(parsed).slice(0, 3);
+    const seeds = shuffle(parsed.filter(function (m) {
+      return exclude ? used.indexOf(m.match_id) === -1 : true;
+    })).slice(0, 4);
+    if (!seeds.length) {
+      throw new Error('Новые матчи не нашлись — попробуй ещё раз через минуту');
+    }
     seeds.forEach(function (m) {
       seenMatch[m.match_id] = true;
     });
@@ -488,14 +524,14 @@
       const players = Array.isArray(row.match.players) ? row.match.players : [];
       players.forEach(function (p) {
         const accountId = p && p.account_id;
-        if (accountId && accounts.length < 3 && !seenAccount[accountId]) {
+        if (accountId && accounts.length < 4 && !seenAccount[accountId]) {
           seenAccount[accountId] = true;
           accounts.push(accountId);
         }
       });
       if (questions.length < POOL_SIZE && isRankedMatch(row.match)) {
         const q = questionFromMatch(row.match, catalogs, row.meta);
-        if (q) {
+        if (q && used.indexOf(q.matchId) === -1) {
           questions.push(q);
         }
       }
@@ -504,7 +540,7 @@
     // 2. Рейтинговая история этих игроков: там рейтинговых матчей уже много.
     if (accounts.length && questions.length < POOL_SIZE) {
       const histories = await Promise.all(accounts.map(function (id) {
-        return getJSON('/api/players/' + id + '/matches?limit=15').catch(function () {
+        return getJSON('/api/players/' + id + '/matches?limit=25').catch(function () {
           return [];
         });
       }));
@@ -512,7 +548,8 @@
       const ranked = [];
       histories.forEach(function (rows) {
         (Array.isArray(rows) ? rows : []).forEach(function (m) {
-          if (!m || !m.match_id || seenMatch[m.match_id] || !isRankedMatch(m)) {
+          if (!m || !m.match_id || seenMatch[m.match_id] ||
+            used.indexOf(m.match_id) !== -1 || !isRankedMatch(m)) {
             return;
           }
           seenMatch[m.match_id] = true;
@@ -528,7 +565,7 @@
           return;
         }
         const q = questionFromMatch(row.match, catalogs, row.meta);
-        if (q) {
+        if (q && used.indexOf(q.matchId) === -1) {
           questions.push(q);
         }
       });
@@ -549,18 +586,62 @@
 
     step('Ищем свежие матчи в OpenDota…');
     let pool = cacheGet(POOL_KEY, CACHE_MS);
-    if (!Array.isArray(pool) || pool.length < Math.min(rounds, 6)) {
-      pool = await refillPool(catalogs, step);
-      cacheSet(POOL_KEY, pool, CACHE_MS);
+    if (!Array.isArray(pool)) {
+      pool = [];
     }
 
-    const out = [];
-    while (out.length < rounds) {
-      const batch = shuffle(pool);
-      for (let i = 0; i < batch.length && out.length < rounds; i++) {
-        out.push(batch[i]);
+    const used = usedMatches();
+    let fresh = pool.filter(function (q) {
+      return q && used.indexOf(q.matchId) === -1;
+    });
+
+    // в кэше остались только уже сыгранные вопросы — добираем новые
+    if (fresh.length < rounds) {
+      step('Ищем новые матчи, чтобы вопросы не повторялись…');
+      try {
+        const extra = await refillPool(catalogs, step, used);
+        const merged = [];
+        const mergeSeen = {};
+        extra.concat(pool).forEach(function (q) {
+          if (q && q.matchId && !mergeSeen[q.matchId]) {
+            mergeSeen[q.matchId] = true;
+            merged.push(q);
+          }
+        });
+        pool = merged;
+        cacheSet(POOL_KEY, pool, CACHE_MS);
+        fresh = pool.filter(function (q) {
+          return used.indexOf(q.matchId) === -1;
+        });
+      } catch (error) {
+        // если новые матчи не нашлись, но старые есть — играем их
+        if (!pool.length) {
+          throw error;
+        }
       }
     }
+
+    const source = fresh.length >= rounds ? fresh : fresh.concat(shuffle(pool));
+    const out = [];
+    const picked = {};
+    for (let i = 0; i < source.length && out.length < rounds; i++) {
+      const q = source[i];
+      if (q && !picked[q.matchId]) {
+        picked[q.matchId] = true;
+        out.push(q);
+      }
+    }
+
+    // крайний случай: уникальных матчей меньше, чем раундов
+    while (out.length < rounds && pool.length) {
+      out.push(pool[out.length % pool.length]);
+    }
+
+    if (!out.length) {
+      throw new Error('Не удалось собрать вопросы из матчей');
+    }
+
+    markUsed(out.map(function (q) { return q.matchId; }));
     return out;
   }
 
