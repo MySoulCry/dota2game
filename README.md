@@ -20,6 +20,8 @@
 - `js/metrics.js` — счётчик Яндекс.Метрики (номер задаётся в настройках).
 - `robots.txt`, `sitemap.xml` — для поисковых систем.
 - `privacy.html` — политика конфиденциальности (её обычно требует AdSense).
+- `manifest.webmanifest`, `icons/`, `sw.js` — установка сайта как приложения (PWA).
+- `PLAY.md` — как выложить в RuStore или Google Play.
 - `.nojekyll` — чтобы GitHub Pages не пропускал файлы через Jekyll.
 
 ## Откуда данные

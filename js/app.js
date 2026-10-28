@@ -1127,6 +1127,15 @@
       }, 800);
     }
 
+    // офлайн-кэш и установка как приложение
+    if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function () {
+          /* кэш не критичен */
+        });
+      });
+    }
+
     const params = new URLSearchParams(window.location.search);
     const code = (params.get('room') || '').trim().toUpperCase();
     if (code && /^[A-Z0-9]{5}$/.test(code)) {

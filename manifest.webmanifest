@@ -1,0 +1,27 @@
+{
+  "name": "Угадай героя — Dota 2",
+  "short_name": "Угадай героя",
+  "description": "Викторина: угадай героя Dota 2 по сборке предметов из реального рейтингового матча. Ранг, ссылка на матч, общий рейтинг и комнаты до 5 игроков.",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
