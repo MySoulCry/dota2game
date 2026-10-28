@@ -13,6 +13,7 @@
   };
   const Questions = window.Questions;
   const Rooms = window.Rooms;
+  const Leaderboard = window.Leaderboard || null;
   const Monetize = window.Monetize || null;
 
   const BOARD_KEY = 'dotaguess.board.v1';
@@ -230,13 +231,17 @@
     if (!el.boardBody) {
       return;
     }
-    const list = Board.all().slice(0, 20);
+    const list = Leaderboard ? Leaderboard.list(20) : [];
+    const meId = Leaderboard ? Leaderboard.playerId() : '';
     el.boardBody.innerHTML = '';
     if (el.boardEmpty) {
       el.boardEmpty.hidden = list.length > 0;
     }
     list.forEach(function (e, i) {
       const tr = document.createElement('tr');
+      if (e.id && e.id === meId) {
+        tr.className = 'is-me';
+      }
       const acc = e.total ? Math.round((e.correct || 0) / e.total * 100) : 0;
       tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + esc(e.name) + '</td><td>' +
         (e.score || 0) + '</td><td>' + acc + '%</td><td>' + (e.streak || 0) + '</td>';
@@ -536,8 +541,13 @@
       mode: 'solo',
       date: Date.now()
     };
-    const place = Board.place(entry.score);
     Board.add(entry);
+    if (Leaderboard) {
+      Leaderboard.submit(entry);
+    }
+    const place = Leaderboard
+      ? Leaderboard.list(100).filter(function (row) { return (row.score || 0) > entry.score; }).length + 1
+      : Board.place(entry.score);
     renderBoard();
     updateHomeStats();
 
@@ -822,6 +832,9 @@
     };
     if (entry.score > 0) {
       Board.add(entry);
+      if (Leaderboard) {
+        Leaderboard.submit(entry);
+      }
       renderBoard();
       updateHomeStats();
     }
@@ -1060,6 +1073,15 @@
     bindEvents();
     renderBoard();
     updateHomeStats();
+
+    if (Leaderboard) {
+      Leaderboard.on(renderBoard);
+      Leaderboard.start().then(function () {
+        renderBoard();
+      }).catch(function () {
+        /* общий рейтинг недоступен — таблица останется пустой до первой игры */
+      });
+    }
 
     // каталоги героев и предметов подтягиваем в фоне, чтобы игра стартовала быстрее
     if (Questions && typeof Questions.warm === 'function') {

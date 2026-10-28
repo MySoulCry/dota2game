@@ -816,4 +816,13 @@
     setName: setMe,
     transport: function () { return net.kind; }
   };
+
+  // тот же транспорт наружу: им пользуется общий рейтинг
+  window.Realtime = {
+    connect: connect,
+    publish: publish,
+    subscribe: subscribe,
+    on: on,
+    kind: function () { return net.kind; }
+  };
 })();
