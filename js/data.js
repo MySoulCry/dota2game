@@ -101,7 +101,8 @@
         await delay(800 * (tries + 1));
         return getJSON(path, tries + 1, limit);
       }
-      throw new Error('Не удалось связаться с OpenDota. Проверь интернет и попробуй ещё раз.');
+      throw new Error('Не удалось связаться с OpenDota (' + path + ', ' +
+        Math.round(limit / 1000) + ' с). Проверь интернет и попробуй ещё раз.');
     }
     window.clearTimeout(timer);
 
@@ -443,10 +444,10 @@
   // детали матчей пачками, вместе с исходной записью (в ней есть avg_rank_tier)
   async function fetchMatchDetails(matches) {
     const out = [];
-    for (let i = 0; i < matches.length; i += 6) {
-      const batch = matches.slice(i, i + 6);
+    for (let i = 0; i < matches.length; i += 3) {
+      const batch = matches.slice(i, i + 3);
       const results = await Promise.all(batch.map(function (m) {
-        return getJSON('/api/matches/' + m.match_id)
+        return getJSON('/api/matches/' + m.match_id, 0, 30000)
           .then(function (data) { return data ? { match: data, meta: m } : null; })
           .catch(function () { return null; });
       }));
@@ -459,7 +460,8 @@
     return out;
   }
 
-  async function refillPool(catalogs) {
+  async function refillPool(catalogs, onStep) {
+    const report = typeof onStep === 'function' ? onStep : function () {};
     const questions = [];
     const accounts = [];
     const seenAccount = {};
@@ -475,17 +477,18 @@
       throw new Error('OpenDota не вернул готовые матчи — попробуй ещё раз через минуту');
     }
 
-    const seeds = shuffle(parsed).slice(0, 4);
+    const seeds = shuffle(parsed).slice(0, 3);
     seeds.forEach(function (m) {
       seenMatch[m.match_id] = true;
     });
 
+    report('Смотрим, кто играл в этих матчах…');
     const seedDetails = await fetchMatchDetails(seeds);
     seedDetails.forEach(function (row) {
       const players = Array.isArray(row.match.players) ? row.match.players : [];
       players.forEach(function (p) {
         const accountId = p && p.account_id;
-        if (accountId && accounts.length < 4 && !seenAccount[accountId]) {
+        if (accountId && accounts.length < 3 && !seenAccount[accountId]) {
           seenAccount[accountId] = true;
           accounts.push(accountId);
         }
@@ -518,6 +521,7 @@
       });
 
       const picked = shuffle(ranked).slice(0, POOL_SIZE + 2);
+      report('Собираем сборки из рейтинговых матчей…');
       const details = await fetchMatchDetails(picked);
       details.forEach(function (row) {
         if (questions.length >= POOL_SIZE) {
@@ -536,13 +540,17 @@
     return questions;
   }
 
-  async function build(count) {
+  async function build(count, onStep) {
     const rounds = Math.max(1, Number(count) || 10);
+    const step = typeof onStep === 'function' ? onStep : function () {};
+
+    step('Загружаем каталог героев и предметов…');
     const catalogs = await ensureCatalogs();
 
+    step('Ищем свежие матчи в OpenDota…');
     let pool = cacheGet(POOL_KEY, CACHE_MS);
     if (!Array.isArray(pool) || pool.length < Math.min(rounds, 6)) {
-      pool = await refillPool(catalogs);
+      pool = await refillPool(catalogs, step);
       cacheSet(POOL_KEY, pool, CACHE_MS);
     }
 

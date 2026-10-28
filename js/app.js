@@ -283,6 +283,13 @@
     el.qTotal.textContent = '—';
   }
 
+  function setLoadingText(text) {
+    const note = el.qItems.querySelector('.question__loading');
+    if (note) {
+      note.textContent = text;
+    }
+  }
+
   function paintError(message) {
     el.qOptions.innerHTML = '';
     el.qLinks.hidden = true;
@@ -454,7 +461,7 @@
     paintLoading();
 
     try {
-      const questions = await Questions.build(SOLO_ROUNDS);
+      const questions = await Questions.build(SOLO_ROUNDS, setLoadingText);
       G.questions = questions;
       G.total = questions.length;
       G.busy = false;
