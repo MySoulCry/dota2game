@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Угадай героя — сборки из реальных матчей Dota 2</title>
+  <meta name="description" content="Викторина по Dota 2: угадай героя по сборке предметов из реального завершённого матча. Видно ранг, примерный MMR и ссылку на матч. Онлайн-комнаты до 5 игроков.">
+  <meta name="theme-color" content="#05060f">
+  <meta property="og:title" content="Угадай героя — Dota 2 по сборкам">
+  <meta property="og:description" content="Сборки предметов из реальных матчей: угадай героя, узнай ранг и MMR, открой ссылку на матч.">
+  <meta property="og:type" content="website">
+  <link rel="canonical" href="https://dota2game.site/">
+  <meta property="og:url" content="https://dota2game.site/">
+  <meta property="og:site_name" content="Угадай героя">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1022'/%3E%3Ctext x='32' y='47' font-size='40' text-anchor='middle' fill='%237cf9ff' font-family='Arial'%3E%3F%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Подтверждение владения сайтом: раскомментируй нужную строку и вставь значение из кабинета.
+  <meta name="yandex-verification" content="PASTE_HERE">
+  <meta name="google-site-verification" content="PASTE_HERE">
+  -->
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="brand" id="nav-home" type="button">
+        <span class="brand__mark" aria-hidden="true">?</span>
+        <span class="brand__text">
+          <span class="brand__name" id="brand-name">Угадай героя</span>
+          <span class="brand__tagline" id="brand-tagline">Сборки из реальных матчей Dota 2</span>
+        </span>
+      </button>
+
+      <nav class="nav">
+        <button class="btn btn--ghost" id="go-solo" type="button">Играть</button>
+        <button class="btn btn--ghost" id="go-online" type="button">Онлайн</button>
+        <button class="btn btn--ghost" id="go-board" type="button">Рейтинги</button>
+      </nav>
+
+      <div class="topbar__actions">
+        <button class="btn btn--ghost" id="btn-donate" type="button">Поддержать</button>
+        <button class="btn btn--ghost" id="btn-pro" type="button">Убрать рекламу</button>
+      </div>
+    </header>
+
+    <main class="screens">
+      <section class="screen is-active" id="screen-home">
+        <div class="hero">
+          <p class="card__kicker">Dota 2 · викторина</p>
+          <h1 class="hero__title">Угадай героя по сборке</h1>
+          <p class="hero__text">Сборки предметов из реальных завершённых матчей: показываем ранг, примерный MMR и ссылку на матч. Угадывай, копи очки и поднимайся в таблице.</p>
+
+          <div class="home__name">
+            <label class="field">
+              <span class="field__label">Твоё имя</span>
+              <input class="input" id="player-name" type="text" maxlength="16" placeholder="Например, PudgeEnjoyer" autocomplete="nickname">
+            </label>
+          </div>
+
+          <div class="home__actions">
+            <button class="btn btn--primary btn--wide" id="btn-solo" type="button">Играть одному</button>
+            <button class="btn btn--ghost btn--wide" id="btn-online-home" type="button">Онлайн-комната (2–5 игроков)</button>
+          </div>
+
+          <div class="home__stats">
+            <div class="stat"><span class="stat__label">Лучший счёт</span><strong id="home-best">0</strong></div>
+            <div class="stat"><span class="stat__label">Игр сыграно</span><strong id="home-games">0</strong></div>
+            <div class="stat"><span class="stat__label">Моё место</span><strong id="home-place">—</strong></div>
+          </div>
+
+          <ul class="rules">
+            <li>10 раундов, на вопрос — 20 секунд.</li>
+            <li>Быстрый верный ответ даёт больше очков, серия добавляет бонус.</li>
+            <li>В онлайне комнату можно создать по коду для друга или открыть для случайных игроков; играть можно от 2 человек.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-online">
+        <div class="grid2">
+          <div class="card">
+            <p class="card__kicker">Создать</p>
+            <h2 class="card__title">Своя комната</h2>
+            <label class="field">
+              <span class="field__label">Раундов</span>
+              <select class="input" id="create-rounds">
+                <option>5</option>
+                <option selected>8</option>
+                <option>10</option>
+                <option>15</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">Секунд на вопрос</span>
+              <select class="input" id="create-time">
+                <option>10</option>
+                <option selected>20</option>
+                <option>30</option>
+                <option>45</option>
+              </select>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="create-private" checked>
+              <span>Только по коду (для друга)</span>
+            </label>
+            <button class="btn btn--primary btn--wide" id="btn-create" type="button">Создать комнату</button>
+          </div>
+
+          <div class="card">
+            <p class="card__kicker">Подключиться</p>
+            <h2 class="card__title">Войти по коду</h2>
+            <label class="field">
+              <span class="field__label">Код комнаты</span>
+              <input class="input input--code" id="join-code" type="text" maxlength="6" placeholder="ABC12" autocapitalize="characters">
+            </label>
+            <button class="btn btn--primary btn--wide" id="btn-join" type="button">Войти</button>
+            <p class="card__hint" id="online-status">Комнаты работают через открытый канал сообщений: до 5 игроков, старт от 2.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card__kicker">Быстрый подбор</p>
+          <button class="btn btn--ghost btn--wide" id="btn-quick" type="button">Найти игру (или создать и ждать)</button>
+          <h3 class="card__subtitle">Открытые комнаты</h3>
+          <div id="rooms-list" class="rooms"></div>
+          <p class="card__hint" id="rooms-empty">Пока пусто — создай комнату или нажми «Найти игру».</p>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-room">
+        <div class="card card--room">
+          <p class="card__kicker">Комната</p>
+          <div class="room__code-row">
+            <span class="room__code" id="room-code">-----</span>
+            <button class="btn btn--ghost" id="btn-copy" type="button">Копировать</button>
+          </div>
+          <p class="card__hint" id="room-link">—</p>
+          <div class="room__settings" id="room-settings"></div>
+          <ol class="players" id="room-players"></ol>
+          <div class="card__actions">
+            <button class="btn btn--primary btn--wide" id="btn-start" type="button" hidden>Начать игру</button>
+            <button class="btn btn--ghost btn--wide" id="btn-leave" type="button">Выйти из комнаты</button>
+          </div>
+          <p class="card__hint" id="room-status">Ждём игроков…</p>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-play">
+        <div class="quiz">
+          <div class="quiz__bar">
+            <button class="btn btn--ghost btn--small" id="quiz-back" type="button">Выход</button>
+            <span class="quiz__round">Раунд <b id="q-round">1</b>/<b id="q-total">10</b></span>
+            <span class="quiz__score">Очки <b id="q-score">0</b></span>
+            <span class="quiz__streak" id="q-streak">Серия 0</span>
+          </div>
+
+          <div class="timer"><span class="timer__fill" id="q-timerbar"></span></div>
+
+          <div class="card question">
+            <div class="badges">
+              <span class="badge" id="q-rank">Ранг</span>
+              <span class="badge badge--ghost" id="q-mmr">MMR</span>
+              <span class="badge badge--ghost" id="q-duration">—</span>
+              <span class="badge badge--ghost" id="q-mode">—</span>
+            </div>
+            <p class="question__title">Чья это сборка? Матч уже завершён — герой скрыт.</p>
+            <div class="items" id="q-items"></div>
+            <div class="links" id="q-links" hidden></div>
+          </div>
+
+          <div class="options" id="q-options"></div>
+
+          <div class="quiz__foot">
+            <button class="btn btn--ghost" id="q-hint" type="button">Подсказка 50/50</button>
+            <button class="btn btn--primary" id="q-next" type="button" hidden>Дальше</button>
+          </div>
+
+          <p class="card__hint" id="q-status" hidden></p>
+          <div class="roomboard" id="q-roomlist" hidden></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-result">
+        <div class="card">
+          <p class="card__kicker" id="result-kicker">Итог</p>
+          <h2 class="card__title" id="result-title">Игра окончена</h2>
+          <p class="card__score" id="result-score">0</p>
+          <p class="card__best" id="result-stats">—</p>
+          <div class="card__actions">
+            <button class="btn btn--primary btn--wide" id="btn-again" type="button">Ещё раз</button>
+            <button class="btn btn--ghost btn--wide" id="btn-result-home" type="button">На главную</button>
+          </div>
+          <div id="result-room"></div>
+          <div class="ad-slot ad-slot--inline">
+            <span class="ad-slot__label">Реклама</span>
+            <div class="ad-slot__body" id="ad-over-body"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-board">
+        <div class="card">
+          <p class="card__kicker">Таблица рейтингов</p>
+          <h2 class="card__title">Лучшие игроки</h2>
+          <table class="board">
+            <thead>
+              <tr><th>#</th><th>Игрок</th><th>Очки</th><th>Точность</th><th>Серия</th></tr>
+            </thead>
+            <tbody id="board-body"></tbody>
+          </table>
+          <p class="card__hint" id="board-empty">Пока нет результатов — сыграй первую игру.</p>
+          <div class="card__actions">
+            <button class="btn btn--ghost btn--wide" id="btn-clear-board" type="button">Очистить таблицу</button>
+          </div>
+          <p class="card__hint">Таблица хранится на этом устройстве. Общий онлайн-рейтинг можно подключить позже — для него нужен свой сервер.</p>
+        </div>
+      </section>
+    </main>
+
+    <aside class="ads">
+      <div class="ad-slot">
+        <span class="ad-slot__label">Реклама</span>
+        <div class="ad-slot__body" id="ad-banner-body"></div>
+      </div>
+    </aside>
+
+    <footer class="footer">
+      <p>Данные матчей — OpenDota, изображения героев и предметов — Valve. Викторина не связана с Valve.</p>
+      <div class="footer__links">
+        <a class="link" href="privacy.html">Политика конфиденциальности</a>
+        <button class="link" id="btn-donate-over" type="button">Поддержать проект</button>
+      </div>
+    </footer>
+  </div>
+
+  <div class="modal" id="rewarded">
+    <div class="modal__box">
+      <p class="card__kicker">Реклама</p>
+      <p class="modal__text">Досмотри рекламу — и подсказка откроется.</p>
+      <p class="modal__count"><span id="rewarded-count">5</span></p>
+      <button class="btn btn--ghost" id="rewarded-cancel" type="button">Отмена</button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/monetization.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/rooms.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

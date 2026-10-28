@@ -1,0 +1,77 @@
+/*
+  Угадай героя — конфигурация сайта.
+
+  Это единственный файл, который нужно править. После правки обнови страницу
+  (и запушь в git, если сайт уже опубликован).
+
+  Реклама:
+    ads.provider — 'yandex' (Яндекс Реклама, РСЯ) — основной вариант для РФ,
+                   'adsense' (Google) или 'none'.
+    ads.yandex   — id блоков РСЯ вида R-A-1234567-1 из кабинета Яндекс Рекламы.
+    ads.client / ads.slots — Publisher ID и id блоков Google AdSense.
+  Пока ads.enabled = false, на месте блоков показывается заглушка — это нормально.
+*/
+window.APP_CONFIG = {
+  brand: {
+    name: 'Угадай героя',
+    tagline: 'Сборки из реальных матчей Dota 2',
+
+    // Куда ведёт кнопка «Поддержать»: Boosty, DonationAlerts, Buy Me a Coffee.
+    // Пусто — кнопка покажет подсказку, что ссылка не настроена.
+    donateUrl: '',
+
+    // Куда ведёт кнопка «Убрать рекламу» (Boosty, Gumroad, ЮKassa).
+    proUrl: '',
+    proPrice: '99 ₽'
+  },
+
+  // Откуда берутся реальные матчи (бесплатный API, без ключа).
+  api: {
+    openDota: 'https://api.opendota.com',
+    poolSize: 12,        // сколько матчей тянем за раз
+    cacheMinutes: 20,    // сколько минут держим собранную пачку вопросов
+    minRankTier: 40,     // приоритет матчам от Archon 5 и выше (0 — без фильтра; Turbo не используется)
+    heroCacheDays: 7
+  },
+
+  // Онлайн-комнаты. Обмен сообщениями идёт через открытый MQTT-брокер,
+  // поэтому свой сервер не нужен. Если брокер недоступен, игра сама
+  // переключится на локальный режим (комнаты видны во вкладках этого браузера).
+  rooms: {
+    brokerUrl: 'wss://broker.emqx.io:8084/mqtt',
+    topicPrefix: 'dotaguess/v1',
+    maxPlayers: 5,
+    minPlayers: 2,
+    defaultRounds: 8,
+    defaultSeconds: 20,
+    lobbyTtlMs: 120000
+  },
+
+  ads: {
+    // true — когда блок создан и модерация пройдена.
+    enabled: false,
+
+    // 'yandex' — Яндекс Реклама (РСЯ), для аудитории из РФ;
+    // 'adsense' — Google AdSense (не платит издателям из РФ);
+    // 'none' — реклама выключена.
+    provider: 'yandex',
+
+    // AdSense: нужны только для provider: 'adsense'.
+    client: '',
+    slots: {
+      banner: '',
+      gameOver: ''
+    },
+
+    // РСЯ: id блоков из кабинета Яндекс Рекламы, вида R-A-1234567-1.
+    yandex: {
+      banner: '',
+      gameOver: ''
+    },
+
+    // Rewarded-реклама за подсказку 50/50 (провайдер, который открывается по ссылке).
+    // Пусто — показывается заглушка с таймером.
+    rewardedUrl: '',
+    rewardedSeconds: 5
+  }
+};
