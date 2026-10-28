@@ -141,6 +141,21 @@
     return name;
   }
 
+  // для перехода по ссылке имя не спрашиваем — генерируем сами
+  function autoNickname() {
+    const typed = el.name ? el.name.value.trim() : '';
+    const stored = (typed || store.get(NICK_KEY) || '').trim();
+    if (stored && stored !== 'Игрок') {
+      return stored.slice(0, 16);
+    }
+    const name = 'Гость' + Math.floor(100 + Math.random() * 900);
+    store.set(NICK_KEY, name);
+    if (el.name) {
+      el.name.value = name;
+    }
+    return name;
+  }
+
   // Один ник на устройство: имя фиксируется после первой завершённой игры.
   function nickLocked() {
     return store.get(NICK_LOCK_KEY) === '1';
@@ -650,6 +665,35 @@
     }
   }
 
+  // переход по ссылке-приглашению: сразу в комнату, без кнопок
+  async function autoJoin(code) {
+    showScreen('online');
+    setOnlineStatus('Присоединяемся к комнате ' + code + '…');
+    const name = autoNickname();
+
+    if (!(await ensureOnline())) {
+      setOnlineStatus('Код ' + code + ' уже вписан — нажми «Войти», когда появится связь.');
+      return;
+    }
+
+    try {
+      Rooms.setName(name);
+      await Rooms.join(code, name);
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('room');
+        window.history.replaceState({}, '', url.toString());
+      } catch (e) {
+        /* не критично */
+      }
+      showScreen('room');
+    } catch (error) {
+      const message = error && error.message ? error.message : 'ошибка';
+      toast('Не удалось войти в комнату: ' + message);
+      setOnlineStatus('Комната ' + code + ' не ответила. Проверь код или попроси новую ссылку.');
+    }
+  }
+
   function roomShareLink(code) {
     return window.location.origin + window.location.pathname + '?room=' + code;
   }
@@ -1139,11 +1183,10 @@
     const params = new URLSearchParams(window.location.search);
     const code = (params.get('room') || '').trim().toUpperCase();
     if (code && /^[A-Z0-9]{5}$/.test(code)) {
-      showScreen('online');
       if (el.joinCode) {
         el.joinCode.value = code;
       }
-      toast('Комната ' + code + ': впиши имя и нажми «Войти»');
+      autoJoin(code);
     }
   }
 
