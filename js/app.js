@@ -283,6 +283,39 @@
     el.qTotal.textContent = '—';
   }
 
+  function paintError(message) {
+    el.qOptions.innerHTML = '';
+    el.qLinks.hidden = true;
+    el.qNext.hidden = true;
+    el.qHint.hidden = true;
+    el.qRoomlist.hidden = true;
+    el.qStatus.hidden = true;
+    el.qRank.textContent = 'Ошибка';
+    el.qMmr.textContent = '—';
+    el.qDuration.textContent = '—';
+    el.qMode.textContent = '—';
+
+    el.qItems.innerHTML = '';
+    const box = document.createElement('div');
+    box.className = 'question__error';
+
+    const text = document.createElement('p');
+    text.className = 'question__loading';
+    text.textContent = message;
+    box.appendChild(text);
+
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'btn btn--primary';
+    retry.textContent = 'Повторить';
+    retry.addEventListener('click', function () {
+      startSolo();
+    });
+    box.appendChild(retry);
+
+    el.qItems.appendChild(box);
+  }
+
   function paintQuestion(question, round, total) {
     el.qRound.textContent = String(round);
     el.qTotal.textContent = String(total);
@@ -428,8 +461,10 @@
       nextSoloQuestion();
     } catch (error) {
       G.busy = false;
-      toast('Не удалось загрузить матчи: ' + (error && error.message ? error.message : 'ошибка сети') + '. Попробуй ещё раз.');
-      showScreen('home');
+      const message = (error && error.message) ? error.message : 'Не удалось загрузить матчи.';
+      console.error('Не удалось собрать вопросы:', error);
+      paintError(message);
+      toast('Матчи не загрузились. ' + message);
     }
   }
 

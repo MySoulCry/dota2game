@@ -78,24 +78,51 @@
     }
   }
 
-  async function getJSON(path) {
+  function delay(ms) {
+    return new Promise(function (resolve) { window.setTimeout(resolve, ms); });
+  }
+
+  // OpenDota бесплатный и с лимитами: на 429/5xx и таймаут пробуем ещё раз
+  async function getJSON(path, attempt) {
+    const tries = Number(attempt) || 0;
     const controller = new AbortController();
-    const timer = window.setTimeout(function () { controller.abort(); }, 12000);
+    const timer = window.setTimeout(function () { controller.abort(); }, 15000);
+    let res = null;
+
     try {
-      const res = await fetch(API + path, {
+      res = await fetch(API + path, {
         signal: controller.signal,
         headers: { Accept: 'application/json' }
       });
-      if (!res.ok) {
-        throw new Error('OpenDota ответил ' + res.status + ' на ' + path);
-      }
-      try {
-        return await res.json();
-      } catch (e) {
-        throw new Error('OpenDota вернул не JSON на ' + path);
-      }
-    } finally {
+    } catch (error) {
       window.clearTimeout(timer);
+      if (tries < 2) {
+        await delay(800 * (tries + 1));
+        return getJSON(path, tries + 1);
+      }
+      throw new Error('Не удалось связаться с OpenDota. Проверь интернет и попробуй ещё раз.');
+    }
+    window.clearTimeout(timer);
+
+    if (res.status === 429 || res.status >= 500) {
+      if (tries < 2) {
+        await delay(1000 * (tries + 1));
+        return getJSON(path, tries + 1);
+      }
+      if (res.status === 429) {
+        throw new Error('OpenDota ограничил частоту запросов (429). Подожди минуту и нажми «Повторить».');
+      }
+      throw new Error('OpenDota ответил ' + res.status + ' на ' + path);
+    }
+
+    if (!res.ok) {
+      throw new Error('OpenDota ответил ' + res.status + ' на ' + path);
+    }
+
+    try {
+      return await res.json();
+    } catch (e) {
+      throw new Error('OpenDota вернул не JSON на ' + path);
     }
   }
 
@@ -446,7 +473,7 @@
       throw new Error('OpenDota не вернул готовые матчи — попробуй ещё раз через минуту');
     }
 
-    const seeds = shuffle(parsed).slice(0, 6);
+    const seeds = shuffle(parsed).slice(0, 4);
     seeds.forEach(function (m) {
       seenMatch[m.match_id] = true;
     });
@@ -456,7 +483,7 @@
       const players = Array.isArray(row.match.players) ? row.match.players : [];
       players.forEach(function (p) {
         const accountId = p && p.account_id;
-        if (accountId && accounts.length < 6 && !seenAccount[accountId]) {
+        if (accountId && accounts.length < 4 && !seenAccount[accountId]) {
           seenAccount[accountId] = true;
           accounts.push(accountId);
         }
@@ -472,7 +499,7 @@
     // 2. Рейтинговая история этих игроков: там рейтинговых матчей уже много.
     if (accounts.length && questions.length < POOL_SIZE) {
       const histories = await Promise.all(accounts.map(function (id) {
-        return getJSON('/api/players/' + id + '/matches?limit=20').catch(function () {
+        return getJSON('/api/players/' + id + '/matches?limit=15').catch(function () {
           return [];
         });
       }));
