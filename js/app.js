@@ -85,8 +85,7 @@
     btnResultHome: $('btn-result-home'),
 
     boardBody: $('board-body'),
-    boardEmpty: $('board-empty'),
-    btnClearBoard: $('btn-clear-board')
+    boardEmpty: $('board-empty')
   };
 
   const G = {
@@ -1020,16 +1019,6 @@
       el.btnResultHome.addEventListener('click', function () {
         showScreen('home');
         updateHomeStats();
-      });
-    }
-
-    if (el.btnClearBoard) {
-      el.btnClearBoard.addEventListener('click', function () {
-        if (window.confirm('Очистить таблицу рейтингов на этом устройстве?')) {
-          Board.save([]);
-          renderBoard();
-          updateHomeStats();
-        }
       });
     }
 
