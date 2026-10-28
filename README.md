@@ -22,6 +22,7 @@
 - `privacy.html` — политика конфиденциальности (её обычно требует AdSense).
 - `manifest.webmanifest`, `icons/`, `sw.js` — установка сайта как приложения (PWA).
 - `PLAY.md` — как выложить в RuStore или Google Play.
+- `marketing/shots.html` — готовые кадры 9:16 для соцсетей: листаешь на телефоне и снимаешь скриншоты.
 - `.nojekyll` — чтобы GitHub Pages не пропускал файлы через Jekyll.
 
 ## Откуда данные

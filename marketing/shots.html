@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Кадры для соцсетей — Угадай героя</title>
+  <meta name="theme-color" content="#05060f">
+  <style>
+    :root {
+      --bg: #05060f;
+      --text: #e8ecff;
+      --muted: #8b98c4;
+      --accent: #7cf9ff;
+      --accent-2: #8a6bff;
+      --good: #4ee39b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+      scroll-snap-type: y mandatory;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .slide {
+      height: 100svh;
+      display: grid;
+      place-items: center;
+      scroll-snap-align: start;
+      padding: 12px;
+      background:
+        radial-gradient(120% 70% at 20% 0%, rgba(138, 107, 255, 0.35), transparent 60%),
+        radial-gradient(100% 60% at 85% 15%, rgba(124, 249, 255, 0.22), transparent 60%),
+        var(--bg);
+    }
+
+    .frame {
+      width: 100%;
+      max-width: calc(100svh * 9 / 16 - 24px);
+      aspect-ratio: 9 / 16;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3.2svh;
+      padding: 4svh 5vw;
+      border-radius: 26px;
+      border: 1px solid rgba(126, 152, 255, 0.25);
+      background: rgba(8, 11, 24, 0.55);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+    }
+
+    .kicker {
+      margin: 0;
+      font-size: 2.1svh;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 6.2svh;
+      line-height: 1.05;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: -0.01em;
+    }
+
+    .title span {
+      background: linear-gradient(135deg, #ffffff, #9fc8ff 55%, #8a6bff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .sub {
+      margin: 0;
+      font-size: 2.4svh;
+      line-height: 1.45;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .domain {
+      margin: 0;
+      font-size: 3svh;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .items {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2svh 2vw;
+      justify-items: center;
+    }
+
+    .item {
+      width: 100%;
+      aspect-ratio: 88 / 64;
+      border-radius: 14px;
+      border: 1px solid rgba(126, 152, 255, 0.3);
+      background: #0b1022;
+      object-fit: cover;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8svh;
+      justify-content: center;
+    }
+
+    .badge {
+      padding: 0.7svh 1.6svh;
+      border-radius: 999px;
+      font-size: 1.9svh;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(124, 249, 255, 0.25), rgba(138, 107, 255, 0.25));
+      border: 1px solid rgba(124, 249, 255, 0.4);
+      color: #d8f7ff;
+    }
+
+    .badge--ghost {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(126, 152, 255, 0.3);
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .heroes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.4svh 2vw;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8svh;
+      padding: 1.2svh 0.6svh;
+      border-radius: 16px;
+      border: 1px solid rgba(126, 152, 255, 0.28);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 1.8svh;
+      text-align: center;
+    }
+
+    .hero img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .hero.is-correct {
+      border-color: var(--good);
+      background: rgba(78, 227, 155, 0.16);
+      box-shadow: 0 0 0 1px rgba(78, 227, 155, 0.4);
+    }
+
+    .big-hero {
+      width: 100%;
+      max-height: 26svh;
+      object-fit: contain;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .score {
+      margin: 0;
+      font-size: 8svh;
+      font-weight: 800;
+      line-height: 1;
+      text-align: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2svh;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 2vw;
+      padding: 1.4svh 2vw;
+      border-radius: 14px;
+      border: 1px solid rgba(126, 152, 255, 0.22);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 2.2svh;
+    }
+
+    .row .n { color: var(--muted); font-size: 1.9svh; width: 3vw; }
+    .row .name { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .row .pts { font-weight: 800; }
+    .row.is-top { border-color: rgba(124, 249, 255, 0.45); }
+    .row.is-top .name { color: var(--accent); font-weight: 700; }
+
+    .code {
+      margin: 0;
+      font-size: 7svh;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .hint {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 8px;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(232, 236, 255, 0.4);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="slide">
+    <div class="frame">
+      <p class="kicker">Dota 2 · викторина</p>
+      <h1 class="title"><span>Угадай героя<br>по сборке</span></h1>
+      <div class="items">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/blink.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/bfury.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/manta.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/butterfly.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/abyssal_blade.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/power_treads.png" alt="">
+      </div>
+      <p class="sub">Реальные рейтинговые матчи.<br>Шесть предметов — и ни одного героя.</p>
+      <p class="domain">dota2game.site</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="frame">
+      <p class="kicker">Раунд 4 · 20 секунд</p>
+      <h2 class="title"><span>Чья это сборка?</span></h2>
+      <div class="badges">
+        <span class="badge">Ancient 3</span>
+        <span class="badge badge--ghost">≈ 4 400 MMR</span>
+        <span class="badge badge--ghost">42:10</span>
+        <span class="badge badge--ghost">Ranked</span>
+      </div>
+      <div class="items">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/blink.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/bfury.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/manta.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/butterfly.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/abyssal_blade.png" alt="">
+        <img class="item" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/power_treads.png" alt="">
+      </div>
+      <div class="heroes">
+        <div class="hero"><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/antimage.png" alt=""><span>Anti-Mage</span></div>
+        <div class="hero"><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/axe.png" alt=""><span>Axe</span></div>
+        <div class="hero"><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/crystal_maiden.png" alt=""><span>Crystal Maiden</span></div>
+        <div class="hero"><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/juggernaut.png" alt=""><span>Juggernaut</span></div>
+        <div class="hero"><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/lina.png" alt=""><span>Lina</span></div>
+        <div class="hero"><img src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/pudge.png" alt=""><span>Pudge</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="frame">
+      <p class="kicker">Верно!</p>
+      <h2 class="title"><span>Это Anti-Mage</span></h2>
+      <img class="big-hero" src="https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/antimage.png" alt="">
+      <p class="score">+127</p>
+      <p class="sub">Сборка настоящая: матч открывается по ссылке в один тап.</p>
+      <div class="badges">
+        <span class="badge badge--ghost">OpenDota</span>
+        <span class="badge badge--ghost">Dotabuff</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="frame">
+      <p class="kicker">Онлайн-комната</p>
+      <h2 class="title"><span>Играй с друзьями</span></h2>
+      <p class="code">ABC12</p>
+      <div class="list">
+        <div class="row is-top"><span class="n">1</span><span class="name">Ты · хост</span><span class="pts">готов</span></div>
+        <div class="row"><span class="n">2</span><span class="name">Друг по ссылке</span><span class="pts">вошёл</span></div>
+        <div class="row"><span class="n">3</span><span class="name">Ещё один</span><span class="pts">ждём</span></div>
+      </div>
+      <p class="sub">До 5 игроков. Старт от двух.<br>Ссылка вводит в комнату сразу.</p>
+      <p class="domain">dota2game.site</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="frame">
+      <p class="kicker">Рейтинг</p>
+      <h2 class="title"><span>Кто лучше читает сборки</span></h2>
+      <div class="list">
+        <div class="row is-top"><span class="n">1</span><span class="name">MidOrFeed</span><span class="pts">1 240</span></div>
+        <div class="row"><span class="n">2</span><span class="name">PudgeEnjoyer</span><span class="pts">1 080</span></div>
+        <div class="row"><span class="n">3</span><span class="name">CarryOnly</span><span class="pts">965</span></div>
+        <div class="row"><span class="n">4</span><span class="name">SupportMain</span><span class="pts">870</span></div>
+        <div class="row"><span class="n">5</span><span class="name">Гость 421</span><span class="pts">640</span></div>
+      </div>
+      <p class="sub">Рейтинг общий и обновляется в реальном времени.</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="frame">
+      <p class="kicker">Бесплатно</p>
+      <h1 class="title"><span>Без установки.<br>Без регистрации.</span></h1>
+      <p class="sub">Открыл ссылку — уже играешь.<br>10 раундов, 20 секунд на ответ.</p>
+      <p class="domain">dota2game.site</p>
+      <div class="badges">
+        <span class="badge">Dota 2</span>
+        <span class="badge badge--ghost">рейтинговые матчи</span>
+        <span class="badge badge--ghost">до 5 игроков</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="hint">листай вниз · скриншот = готовый кадр 9:16</div>
+</body>
+</html>
