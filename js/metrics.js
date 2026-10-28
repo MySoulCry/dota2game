@@ -29,7 +29,7 @@
     k.async = 1;
     k.src = r;
     a.parentNode.insertBefore(k, a);
-  })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym');
+  })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=' + id, 'ym');
 
   try {
     window.ym(Number(id), 'init', {
