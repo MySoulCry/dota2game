@@ -343,6 +343,12 @@ body {
   line-height: 1.6;
 }
 
+.rules__more {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+}
+
 /* ---------- карточки ---------- */
 
 .card {
