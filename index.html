@@ -198,6 +198,7 @@
           <div class="card__actions">
             <button class="btn btn--primary btn--wide" id="btn-again" type="button">Ещё раз</button>
             <button class="btn btn--donate btn--wide" id="btn-donate-result" type="button">Донатик на дошик</button>
+            <button class="btn btn--ghost btn--wide" id="btn-share" type="button">Поделиться результатом</button>
             <button class="btn btn--ghost btn--wide" id="btn-result-home" type="button">На главную</button>
           </div>
           <div id="result-room"></div>
@@ -229,6 +230,14 @@
         <span class="ad-slot__label">Реклама</span>
         <div class="ad-slot__body" id="ad-banner-body"></div>
       </div>
+    </aside>
+
+    <aside class="promo" id="promo-slot" hidden>
+      <a class="promo__card" id="promo-link" href="#" target="_blank" rel="noopener sponsored">
+        <strong id="promo-title"></strong>
+        <span id="promo-text"></span>
+        <span class="promo__label" id="promo-label">Перейти</span>
+      </a>
     </aside>
 
     <footer class="footer">

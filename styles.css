@@ -906,6 +906,44 @@ body {
   display: none;
 }
 
+/* ---------- промо-блок (партнёрская ссылка) ---------- */
+
+.promo {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.promo__card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 196, 87, 0.35);
+  background: rgba(255, 196, 87, 0.08);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.promo__card strong {
+  color: #ffd9a0;
+  white-space: nowrap;
+}
+
+.promo__card span:not(.promo__label) {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--muted);
+}
+
+.promo__label {
+  flex: 0 0 auto;
+  color: #ffd9a0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .footer {
   display: flex;
   align-items: center;

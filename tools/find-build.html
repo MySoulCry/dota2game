@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Поиск матча по сборке — Угадай героя</title>
+  <meta name="theme-color" content="#05060f">
+  <link rel="canonical" href="https://dota2game.site/tools/find-build.html">
+  <link rel="stylesheet" href="../styles.css?v=14">
+  <style>
+    body { overflow-y: auto; }
+    .page { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+    .page h1 { margin: 0 0 8px; font-size: 24px; }
+    .page p.lead { margin: 0 0 20px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .row2 { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row2 > * { flex: 1 1 160px; }
+    .grid6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .out { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .hit {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: 14px;
+      border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04);
+      font-size: 14px; color: var(--text); text-decoration: none;
+    }
+    .hit:hover { border-color: rgba(124, 249, 255, 0.5); }
+    .hit__id { font-weight: 700; letter-spacing: 0.02em; }
+    .hit__meta { color: var(--muted); font-size: 12px; margin-left: auto; text-align: right; }
+    .status { margin-top: 14px; font-size: 13px; color: var(--muted); min-height: 20px; }
+    .status.is-error { color: #ff8fa3; }
+    .note { margin-top: 26px; padding: 12px 14px; border-left: 3px solid var(--accent); background: rgba(124, 249, 255, 0.06); border-radius: 0 10px 10px 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a class="link" href="../index.html">← В игру</a>
+    <h1>Найти матч по сборке</h1>
+    <p class="lead">Инструмент ищет реальные завершённые матчи, где у героя в конце игры были все выбранные предметы. По умолчанию подставлен набор из рекламного макета: Anti-Mage, Blink, Battle Fury, Manta, Butterfly, Abyssal Blade, Power Treads.</p>
+
+    <div class="row2">
+      <label class="field">
+        <span class="field__label">Герой</span>
+        <select class="input" id="hero"></select>
+      </label>
+      <label class="field">
+        <span class="field__label">Только рейтинговые</span>
+        <select class="input" id="ranked">
+          <option value="1" selected>Да</option>
+          <option value="0">Любые</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="grid6" id="items"></div>
+
+    <div class="card__actions">
+      <button class="btn btn--primary btn--wide" id="run" type="button">Найти матчи</button>
+    </div>
+
+    <p class="status" id="status"></p>
+    <div class="out" id="out"></div>
+
+    <p class="note">Ищем через SQL-выборку OpenDota по инвентарю на конец матча. Если сервис отвечает ошибкой доступа к explorer — значит, SQL-запросы для бесплатного тарифа закрыты, тогда скажи: сделаю поиск через историю игроков.</p>
+  </div>
+
+  <script>
+    const API = 'https://api.opendota.com';
+    const DEFAULTS = ['blink', 'bfury', 'manta', 'butterfly', 'abyssal_blade', 'power_treads'];
+    const out = document.getElementById('out');
+    const statusEl = document.getElementById('status');
+    const heroSelect = document.getElementById('hero');
+    const itemsWrap = document.getElementById('items');
+    const rankedSelect = document.getElementById('ranked');
+
+    function setStatus(text, isError) {
+      statusEl.textContent = text || '';
+      statusEl.classList.toggle('is-error', !!isError);
+    }
+
+    async function getJSON(path) {
+      const res = await fetch(API + path);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+
+    async function boot() {
+      setStatus('Загружаем героев и предметы…');
+      try {
+        const [heroes, itemsMap] = await Promise.all([
+          getJSON('/api/heroes'),
+          getJSON('/api/constants/item_ids')
+        ]);
+
+        heroes.sort(function (a, b) { return a.localized_name.localeCompare(b.localized_name); });
+        heroSelect.innerHTML = heroes.map(function (h) {
+          return '<option value="' + h.id + '"' + (h.id === 1 ? ' selected' : '') + '>' + h.localized_name + '</option>';
+        }).join('');
+
+        const items = Object.keys(itemsMap).map(function (key) {
+          return { id: Number(key), name: itemsMap[key] };
+        }).filter(function (it) { return it.id > 0 && !/^recipe/i.test(it.name); });
+        items.sort(function (a, b) { return a.name.localeCompare(b.name); });
+
+        const options = items.map(function (it) {
+          return '<option value="' + it.id + '">' + it.name + '</option>';
+        }).join('');
+
+        itemsWrap.innerHTML = DEFAULTS.map(function (name, i) {
+          const found = items.filter(function (it) { return it.name === name; })[0];
+          return '<label class="field"><span class="field__label">Предмет ' + (i + 1) + '</span>' +
+            '<select class="input item-slot" data-default="' + name + '">' +
+            '<option value="">—</option>' + options + '</select></label>';
+        }).join('');
+
+        Array.prototype.forEach.call(itemsWrap.querySelectorAll('.item-slot'), function (sel) {
+          const found = items.filter(function (it) { return it.name === sel.dataset.default; })[0];
+          if (found) sel.value = String(found.id);
+        });
+
+        setStatus('Готово. Нажми «Найти матчи».');
+      } catch (error) {
+        setStatus('Не удалось загрузить справочники: ' + error.message, true);
+      }
+    }
+
+    function buildSql() {
+      const ids = Array.prototype.slice.call(itemsWrap.querySelectorAll('.item-slot'))
+        .map(function (sel) { return Number(sel.value); })
+        .filter(function (id) { return id > 0; });
+      if (!ids.length) return null;
+
+      const heroId = Number(heroSelect.value);
+      const ranked = rankedSelect.value === '1';
+
+      return 'SELECT pm.match_id, m.duration, m.start_time, m.avg_rank_tier ' +
+        'FROM player_matches pm JOIN matches m ON m.match_id = pm.match_id ' +
+        'WHERE pm.hero_id = ' + heroId +
+        (ranked ? ' AND m.lobby_type = 7' : '') +
+        ' AND m.duration >= 1200' +
+        ' AND ARRAY[pm.item_0, pm.item_1, pm.item_2, pm.item_3, pm.item_4, pm.item_5] @> ARRAY[' + ids.join(',') + ']' +
+        ' ORDER BY m.start_time DESC LIMIT 10';
+    }
+
+    function rankName(tier) {
+      const tiers = [null, 'Herald', 'Guardian', 'Crusader', 'Archon', 'Legend', 'Ancient', 'Divine', 'Immortal'];
+      const rt = Number(tier) || 0;
+      if (!rt) return 'ранг скрыт';
+      const t = Math.min(8, Math.floor(rt / 10));
+      return tiers[t] + (rt % 10 ? ' ' + (rt % 10) : '');
+    }
+
+    function minutes(seconds) {
+      const total = Math.round(Number(seconds) || 0);
+      return Math.floor(total / 60) + ':' + String(total % 60).padStart(2, '0');
+    }
+
+    async function run() {
+      const sql = buildSql();
+      if (!sql) {
+        setStatus('Выбери хотя бы один предмет.', true);
+        return;
+      }
+      out.innerHTML = '';
+      setStatus('Ищем…');
+      try {
+        const data = await getJSON('/api/explorer?sql=' + encodeURIComponent(sql));
+        const rows = (data && data.rows) || [];
+        if (!rows.length) {
+          setStatus('Таких матчей в последних данных не нашлось. Убери один-два предмета или переключи на «Любые».', true);
+          return;
+        }
+        setStatus('Найдено: ' + rows.length);
+        out.innerHTML = rows.map(function (row) {
+          return '<a class="hit" href="https://www.opendota.com/matches/' + row.match_id + '" target="_blank" rel="noopener">' +
+            '<span class="hit__id">' + row.match_id + '</span>' +
+            '<span class="hit__meta">' + minutes(row.duration) + ' · ' + rankName(row.avg_rank_tier) + '<br>' +
+            new Date((Number(row.start_time) || 0) * 1000).toLocaleDateString('ru-RU') + '</span></a>';
+        }).join('');
+      } catch (error) {
+        setStatus('OpenDota ответил ошибкой: ' + error.message + '. Если это доступ к explorer — напиши, сделаю поиск иначе.', true);
+      }
+    }
+
+    document.getElementById('run').addEventListener('click', run);
+    boot();
+  </script>
+</body>
+</html>
