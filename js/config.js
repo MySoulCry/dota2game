@@ -17,9 +17,8 @@ window.APP_CONFIG = {
     name: 'Угадай героя',
     tagline: 'Сборки из реальных матчей Dota 2',
 
-    // Куда ведёт кнопка «Поддержать»: Boosty, DonationAlerts, Buy Me a Coffee.
-    // Пусто — кнопка покажет подсказку, что ссылка не настроена.
-    donateUrl: '',
+    // Куда ведёт кнопка «Автору на доширак»: Boosty, DonationAlerts, Buy Me a Coffee.
+    donateUrl: 'https://www.donationalerts.com/r/mysoulcry',
 
     // Куда ведёт кнопка «Убрать рекламу» (Boosty, Gumroad, ЮKassa).
     proUrl: '',
