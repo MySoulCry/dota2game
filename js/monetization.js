@@ -402,14 +402,12 @@
     applyPro();
     mountAds();
 
-    const donate = document.getElementById('btn-donate');
-    if (donate) {
-      donate.addEventListener('click', openDonate);
-    }
-    const donateOver = document.getElementById('btn-donate-over');
-    if (donateOver) {
-      donateOver.addEventListener('click', openDonate);
-    }
+    ['btn-donate', 'btn-donate-over', 'btn-donate-home', 'btn-donate-result'].forEach(function (id) {
+      const node = document.getElementById(id);
+      if (node) {
+        node.addEventListener('click', openDonate);
+      }
+    });
     const proBtn = document.getElementById('btn-pro');
     if (proBtn) {
       proBtn.addEventListener('click', openPro);

@@ -161,6 +161,17 @@ body {
   width: 100%;
 }
 
+.btn--donate {
+  border-color: rgba(255, 196, 87, 0.5);
+  background: rgba(255, 196, 87, 0.12);
+  color: #ffd9a0;
+}
+
+.btn--donate:hover:not(:disabled) {
+  background: rgba(255, 196, 87, 0.2);
+  border-color: rgba(255, 196, 87, 0.75);
+}
+
 .btn--small {
   padding: 7px 12px;
   font-size: 12px;
@@ -277,10 +288,7 @@ body {
   margin: 4px 0 10px;
   font-size: clamp(26px, 6vw, 40px);
   line-height: 1.1;
-  background: linear-gradient(135deg, #ffffff, #9fc8ff 60%, #8a6bff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #ffffff;
 }
 
 .hero__text {

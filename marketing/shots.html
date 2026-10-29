@@ -33,10 +33,7 @@
       place-items: center;
       scroll-snap-align: start;
       padding: 12px;
-      background:
-        radial-gradient(120% 70% at 20% 0%, rgba(138, 107, 255, 0.35), transparent 60%),
-        radial-gradient(100% 60% at 85% 15%, rgba(124, 249, 255, 0.22), transparent 60%),
-        var(--bg);
+      background: #05060f;
     }
 
     .frame {
@@ -49,8 +46,8 @@
       gap: 3.2svh;
       padding: 4svh 5vw;
       border-radius: 26px;
-      border: 1px solid rgba(126, 152, 255, 0.25);
-      background: rgba(8, 11, 24, 0.55);
+      border: 1px solid rgba(126, 152, 255, 0.22);
+      background: #0a0e20;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
       overflow: hidden;
     }
@@ -71,13 +68,14 @@
       font-weight: 800;
       text-align: center;
       letter-spacing: -0.01em;
+      color: #ffffff;
     }
 
     .title span {
-      background: linear-gradient(135deg, #ffffff, #9fc8ff 55%, #8a6bff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: #ffffff;
+      background: none;
+      -webkit-background-clip: initial;
+      background-clip: initial;
     }
 
     .sub {
@@ -85,7 +83,7 @@
       font-size: 2.4svh;
       line-height: 1.45;
       text-align: center;
-      color: var(--muted);
+      color: #a3b0d6;
     }
 
     .domain {
